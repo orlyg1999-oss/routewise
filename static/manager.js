@@ -135,6 +135,17 @@ function renderHoodFilter() {
     state.round.neighborhoods.map((h) => `<option>${esc(h.neighborhood)}</option>`).join("");
 }
 $("hoodFilter").addEventListener("change", loadRanking);
+$("rankSearch").addEventListener("input", () => {
+  renderRanking();
+  renderRankMap();
+});
+
+// Properties whose address or ext_id contains the search text.
+function visibleRanking() {
+  const q = $("rankSearch").value.trim().toLowerCase();
+  if (!q) return state.ranking;
+  return state.ranking.filter((p) => `${p.address || ""} ${p.ext_id || ""}`.toLowerCase().includes(q));
+}
 
 async function loadRanking() {
   const hood = $("hoodFilter").value;
@@ -146,7 +157,12 @@ async function loadRanking() {
 
 function renderRanking() {
   const maxScore = Math.max(1, ...state.ranking.map((p) => p.score || 0));
-  $("rankBody").innerHTML = state.ranking.map((p) => `
+  const rows = visibleRanking();
+  if (!rows.length) {
+    $("rankBody").innerHTML = `<tr><td colspan="6" class="hint">אין נכסים שמתאימים לחיפוש</td></tr>`;
+    return;
+  }
+  $("rankBody").innerHTML = rows.map((p) => `
     <tr class="clickable" data-id="${p.id}">
       <td>${p.rank}</td>
       <td>${esc(p.address)}<div class="bar" style="margin-top:4px"><i style="width:${(100 * (p.score || 0)) / maxScore}%"></i></div></td>
@@ -195,7 +211,7 @@ function renderRankMap() {
   state.markers.clearLayers();
   const maxScore = Math.max(1, ...state.ranking.map((p) => p.score || 0));
   const pts = [];
-  state.ranking.forEach((p) => {
+  visibleRanking().forEach((p) => {
     const r = 4 + 10 * Math.sqrt((p.score || 0) / maxScore);
     L.circleMarker([p.lat, p.lon], { radius: r, color: "#1f5fbf", weight: 1, fillOpacity: 0.45 })
       .bindTooltip(`#${p.rank} ${esc(p.address)}<br>${money(p.score)}`, { direction: "top" })
