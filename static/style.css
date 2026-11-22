@@ -41,7 +41,7 @@ section.card h2 .num {
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 label.field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
 input, select, button { font: inherit; }
-input[type=text], input[type=number], select {
+input[type=text], input[type=search], input[type=number], select {
   border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; background: #fff; color: var(--ink);
 }
 input[type=number] { width: 80px; }
