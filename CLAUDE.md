@@ -32,6 +32,10 @@ Delete `routewise.db` to reset the data. `.claude/launch.json` defines the `rout
 - `app/api/surveyor.py`: a route is built on first `open`, from the surveyor's GPS (falls back to the neighborhood centroid if it is more than 5 km away). Stop actions: `done`, `not_done` + reason (`locked|no_answer|refused|other`), `skip` (moves the stop to the end), `undo`.
 - `static/manager.*`, `static/surveyor.*`, `static/common.js`, `static/style.css`.
 
+## Branches
+- `main` is the stable version; `dev` is for ongoing work.
+- Commit to `dev`. Merge into `main` only when `pytest` passes and the flow works.
+
 ## Conventions
 - UI text is Hebrew (RTL); code, identifiers, and comments are English.
 - After approval, the round's weights and assignments are locked (HTTP 409).

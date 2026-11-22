@@ -1,34 +1,141 @@
-# RouteWise – v1 (semester MVP)
+<div dir="rtl">
 
-Prioritized visit routes for the Jerusalem collection department's field surveyors. Built from `RouteWise-PDR-מתוקן.md`.
-**Synthetic data only. No real resident data, and no login (per the PDR).**
+# RouteWise 🧭
 
-## Run
+**מסלולי ביקור מתועדפים לסוקרי השטח של אגף הגבייה בעיריית ירושלים.**
+
+RouteWise נותן לסוקר מסלול ביקורים בשכונה שאליה נשלח, כך שקודם מגיעים לנכסים שיכולים להכניס הכי הרבה כסף לעירייה, ובסדר שלא מחייב לזגזג מקצה לקצה השכונה.
+
+> ⚠️ גרסה ראשונה (פרויקט סמסטר). המערכת עובדת **עם נתונים סינתטיים בלבד**, בלי נתונים אמיתיים של תושבים ובלי מערכת הזדהות.
+
+---
+
+## הבעיה
+
+סוקר שנשלח לשכונה מחליט לבד מאיפה להתחיל ולאן ללכת אחר כך, בלי לדעת אילו נכסים שווים יותר. כל פער שמתגלה בביקור בין הרישום למצב בשטח, בגודל הנכס או בשימוש בו, יוצר חוב שהוא הכנסה לאגף. לכן סדר הביקורים הוא כסף.
+
+## המשתמשים
+
+| משתמש | מה הוא עושה ב-RouteWise |
+|---|---|
+| **מנהל השומה** | מעלה קובץ נכסים, קובע משקלים לקריטריונים, רואה דירוג שקוף, מזין שיבוץ סוקרים לשכונות, מאשר ומקבל דוח ביקורים |
+| **סוקר השטח** | מקבל מסלול מוכן כרשימה ועל מפה, מנווט לנכס הבא ומסמן בוצע / לא בוצע / דילוג |
+
+## מה יש בגרסה הראשונה
+
+**מנהל השומה**
+- העלאת קובץ Excel או CSV עם רשימת נכסים.
+- בדיקת תקינות: כתובות חסרות, כפילויות, ערכים לא מספריים ונכסים בלי מיקום.
+- הגדרת תפקיד ומשקל לכל קריטריון, וחישוב ציון מחדש לפי דרישה.
+- דירוג נכסים עם **פירוק ציון** לכל נכס ("למה הנכס קיבל את הציון הזה"), ומפה של הנכסים לפי ערך.
+- הזנת שיבוץ סוקר לכל שכונה, ואז אישור ושליחה. אחרי האישור המשקלים והשיבוץ ננעלים.
+- דוח ביקורים: מה בוצע, מה לא בוצע ולמה, עם חותמות זמן והכנסה צפויה מהביקורים. אפשר להוריד אותו כ-CSV.
+
+**סוקר השטח** (מסך מותאם לטלפון ולשימוש ביד אחת)
+- "הנכס הבא" בראש המסך, עם כפתורי ניווט ל-**Waze** ול-**Google Maps**.
+- **בוצע** (כפתור גדול), **לא בוצע** עם סיבה (נעול / אין מענה / סירוב / אחר), ו**דילוג** שמעביר את הנכס לסוף הרשימה.
+- תצוגת המסלול כ**רשימה** ועל **מפה** ממוספרת.
+- המסלול נבנה בפעם הראשונה שהסוקר פותח אותו, **מהמיקום שלו**. אם המיקום לא זמין, הוא נבנה ממרכז השכונה.
+
+## הפעלה מהירה
+
+דרישות: Python 3.11 ומעלה.
 
 ```bash
+git clone https://github.com/orlyg1999-oss/routewise.git
+cd routewise
 python -m venv .venv
-.venv/Scripts/python -m pip install -r requirements.txt     # macOS/Linux: .venv/bin/...
-.venv/Scripts/python scripts/make_synthetic.py              # -> sample_data/properties.xlsx
+.venv/Scripts/python -m pip install -r requirements.txt
+```
+
+יצירת קובץ נכסים לדוגמה (`sample_data/properties.xlsx`):
+
+```bash
+.venv/Scripts/python scripts/make_synthetic.py
+```
+
+הרצת השרת:
+
+```bash
 .venv/Scripts/python -m uvicorn app.main:app --port 8000
 ```
 
-Open http://localhost:8000. To start over, delete `routewise.db`.
+אחר כך פותחים בדפדפן את http://localhost:8000.
 
-Tests: `.venv/Scripts/python -m pytest -q`
+הרצת הבדיקות:
 
-## End-to-end flow
-1. **Manager** (`/static/manager.html`): upload `sample_data/properties.xlsx` and review the validation report. Rows with a missing address, duplicates, or no location are excluded; non-numeric values are flagged as warnings.
-2. Set each criterion's role (gap probability / amount ₪ / not used), weight, and direction, then recalculate the score. Click a property in the ranking to see why it got its score.
-3. Assign a surveyor to each neighborhood, then approve. Weights and assignments are locked after approval.
-4. **Surveyor** (`/static/surveyor.html`): pick a name and a route. The route is built on first open, starting from the surveyor's location (or the neighborhood centre if that location is unavailable or more than 5 km away). The screen shows the next property, Waze / Google Maps navigation, and done / not done (with a reason) / skip (moves it to the end), as a list and on a map.
-5. **Report** (on the manager screen): done / not done / reason / timestamps / expected revenue of the visits, plus a CSV download.
+```bash
+.venv/Scripts/python -m pytest -q
+```
 
-## How the score and the route work
-- **Score** (`app/scoring.py`): expected revenue = P(gap) × amount. P is a weighted average of the "probability" criteria after min-max normalization within the round. The amount is a weighted sum of the ₪ criteria. The score does not depend on the surveyor's location, so the manager sees one fixed ranking.
-- **Route** (`app/routing.py`): maximizes Σ score × 0.5^(arrival time / 4h) − a travel-time cost. High value gets visited early, zig-zagging is penalized, and a nearby cluster can come before a single distant property. It uses greedy insertion followed by relocate and 2-opt improvement. Parameters are in `RouteParams`.
+> ב-macOS או Linux מחליפים את `.venv/Scripts/` ב-`.venv/bin/`. כדי להתחיל מאפס, מוחקים את הקובץ `routewise.db`.
 
-## Structure
-`app/` server (FastAPI + SQLite) · `static/` screens (HTML/JS, Leaflet) · `scripts/make_synthetic.py` synthetic data · `tests/`
+## תהליך עבודה לדוגמה
 
-## Deferred to the next phase (per the PDR)
-Real-time monitoring, offline mode, rebuilding the route from the current location, login, the AI assistant for weights, municipal GIS / systems integration, printable export.
+1. **מנהל** (`/static/manager.html`): מעלה את `sample_data/properties.xlsx`. קובץ הדוגמה כולל בכוונה כמה שגיאות, כדי שיהיה אפשר לראות את בדיקת התקינות.
+2. משנה משקלים, לוחץ "חישוב ציון מחדש", ולוחץ על נכס בדירוג כדי לראות את פירוק הציון.
+3. משבץ סוקר לשכונה ולוחץ "אישור הדירוג ושליחת המסלולים".
+4. **סוקר** (`/static/surveyor.html`): בוחר שם ומסלול, ומסמן ביקורים.
+5. **מנהל**: בסוף הסבב רואה את דוח הביקורים ומוריד CSV.
+
+## איך זה עובד
+
+### ציון ערך לנכס
+הציון הוא **הכנסה צפויה**:
+
+<div dir="ltr">
+
+```
+ציון = סיכוי לפער × סכום ההכנסה אם יימצא פער
+```
+
+</div>
+
+- **קריטריוני "סיכוי"**, למשל פער שטח לפי צילום אוויר, תלונות, או שנים מאז הביקור האחרון: כל אחד מנורמל לטווח 0–1 בתוך הסבב, ואז מחושב ממוצע משוקלל לפי המשקלים שהמנהל קבע.
+- **קריטריוני "סכום"**, למשל חוב פוטנציאלי בש"ח: סכום משוקלל.
+- הציון **לא תלוי במיקום הסוקר**, ולכן המנהל רואה דירוג קבוע וברור.
+
+### סדר הביקורים: ערך מול מרחק
+מנוע המסלול נפרד מהציון. הוא מחפש סדר שבו הערך הגבוה נאסף מוקדם ביום, וזמן הנסיעה נשאר קצר. כך אשכול של נכסים קרובים יכול להקדים נכס בודד ויקר שנמצא רחוק, והסוקר לא מזגזג בשכונה.
+
+פרטים טכניים: [`app/routing.py`](app/routing.py) ו-[`app/scoring.py`](app/scoring.py).
+
+## מבנה הפרויקט
+
+| תיקייה / קובץ | תוכן |
+|---|---|
+| `app/main.py` | השרת (FastAPI) |
+| `app/ingest.py` | קריאת קובץ Excel/CSV ובדיקת תקינות |
+| `app/scoring.py` | חישוב ציון ופירוק ציון |
+| `app/routing.py` | מנוע בניית המסלול |
+| `app/geocode.py` | המרת כתובת למיקום (OpenStreetMap) |
+| `app/api/` | ממשקי API למנהל ולסוקר |
+| `static/` | המסכים: מנהל, סוקר ודף פתיחה (HTML/JS, מפות Leaflet) |
+| `scripts/make_synthetic.py` | יצירת נתונים סינתטיים |
+| `tests/` | בדיקות אוטומטיות |
+| `RouteWise-PDR-מתוקן.md` | מסמך האפיון (PDR) |
+| `CLAUDE.md` | הנחיות לעבודה על הקוד עם Claude Code |
+
+**טכנולוגיות:** Python, FastAPI, SQLite, openpyxl, HTML/JavaScript, Leaflet ו-OpenStreetMap.
+
+## ענפים (Branches)
+
+| ענף | תפקיד |
+|---|---|
+| `main` | הגרסה היציבה והעובדת |
+| `dev` | ענף הפיתוח |
+
+העבודה השוטפת נעשית ב-`dev`. כשהשינויים עובדים והבדיקות עוברות, ממזגים אותם ל-`main`.
+
+## מה בשלב הבא
+
+לפי מסמך האפיון, אלה נדחו לשלב הבא:
+- לוח בקרה עם סטטוס ביקורים בזמן אמת
+- עבודה ללא קליטה וסנכרון כשהקליטה חוזרת
+- בניית מסלול מחדש מהמיקום הנוכחי
+- כניסה עם הזדהות, ומחיקת נתונים מהמכשיר בסוף היום
+- סוכן שעוזר לתרגם קריטריון בשפה חופשית למשקלים
+- שימוש בשכבת ה-GIS העירונית וחיבור למערכות העירייה
+- ייצוא המסלול לרשימה מודפסת
+
+</div>
