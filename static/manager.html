@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RouteWise · מנהל השומה</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <h1><a href="index.html" style="text-decoration:none;color:inherit">Route<span>Wise</span></a></h1>
+  <div class="sub">מנהל השומה</div>
+  <div style="flex:1"></div>
+  <label class="field">סבב
+    <select id="roundSelect"><option value="">— סבב חדש —</option></select>
+  </label>
+</header>
+<main>
+
+<section class="card" id="secUpload">
+  <h2><span class="num">1</span>סבב חדש: העלאת קובץ נכסים</h2>
+  <p class="hint">קובץ Excel או CSV. עמודות חובה: <b>כתובת</b>, <b>שכונה</b>. מומלץ: מזהה נכס, lat, lon. כל עמודה מספרית אחרת הופכת לקריטריון תעדוף.</p>
+  <form id="uploadForm" class="row">
+    <label class="field">שם הסבב<input type="text" id="roundName" placeholder="למשל: סבב דצמבר 2026" required></label>
+    <label class="field">קובץ<input type="file" id="fileInput" accept=".xlsx,.csv" required></label>
+    <button class="primary" type="submit" id="uploadBtn">העלאה ובדיקת תקינות</button>
+  </form>
+</section>
+
+<div id="roundArea" class="hidden">
+
+<section class="card">
+  <h2><span class="num">2</span>בדיקת תקינות</h2>
+  <p class="hint">שורות עם שגיאה לא נכנסות למסלול. אזהרות נכנסות, עם ערך חסר בעמודה הבעייתית.</p>
+  <div class="row" id="valSummary"></div>
+  <div class="scroll" style="max-height:220px;margin-top:10px" id="valIssuesWrap">
+    <table><thead><tr><th>שורה בקובץ</th><th>סוג</th><th>פירוט</th></tr></thead><tbody id="valIssues"></tbody></table>
+  </div>
+</section>
+
+<section class="card">
+  <h2><span class="num">3</span>קריטריונים ומשקלים</h2>
+  <p class="hint">
+    הציון הוא <b>הכנסה צפויה = סיכוי לפער × סכום אם יימצא פער</b>.
+    קריטריון "סיכוי" מנורמל ל-0–1 בתוך הסבב ומשוקלל לממוצע. קריטריון "סכום" מצטבר בש"ח לפי המשקל.
+  </p>
+  <div id="lockedNote" class="locked-note hidden">הסבב אושר ונשלח לסוקרים, ולכן המשקלים נעולים.</div>
+  <table>
+    <thead><tr><th>עמודה בקובץ</th><th>תפקיד</th><th>משקל</th><th>הפוך (ערך נמוך = סיכוי גבוה)</th></tr></thead>
+    <tbody id="critBody"></tbody>
+  </table>
+  <div class="row" style="margin-top:12px">
+    <button class="primary" id="rescoreBtn">חישוב ציון מחדש</button>
+    <span class="hint" style="margin:0" id="rescoreHint"></span>
+  </div>
+</section>
+
+<section class="card">
+  <h2><span class="num">4</span>דירוג הנכסים</h2>
+  <p class="hint">לחיצה על שורה מציגה למה הנכס קיבל את הציון שלו.</p>
+  <div class="row" style="margin-bottom:10px">
+    <label class="field">שכונה<select id="hoodFilter"><option value="">כל השכונות</option></select></label>
+  </div>
+  <div class="grid2">
+    <div class="scroll">
+      <table>
+        <thead><tr><th>#</th><th>כתובת</th><th>שכונה</th><th>סיכוי</th><th class="num">סכום ₪</th><th class="num">ציון ₪</th></tr></thead>
+        <tbody id="rankBody"></tbody>
+      </table>
+    </div>
+    <div id="rankMap"></div>
+  </div>
+</section>
+
+<section class="card">
+  <h2><span class="num">5</span>שיבוץ ואישור</h2>
+  <p class="hint">הזינו את השיבוץ שנקבע באגף: איזה סוקר יוצא לאיזו שכונה. אחרי האישור כל סוקר יקבל את מסלול השכונה שלו, והמסלול ייבנה מהמיקום שלו כשיפתח אותו.</p>
+  <table>
+    <thead><tr><th>שכונה</th><th class="num">נכסים</th><th class="num">ערך צפוי כולל ₪</th><th>סוקר</th></tr></thead>
+    <tbody id="assignBody"></tbody>
+  </table>
+  <div class="row" style="margin-top:12px">
+    <button id="saveAssignBtn">שמירת שיבוץ</button>
+    <button class="primary" id="approveBtn">אישור הדירוג ושליחת המסלולים</button>
+  </div>
+</section>
+
+<section class="card hidden" id="secReport">
+  <h2><span class="num">6</span>דוח ביקורים</h2>
+  <p class="hint">מה בוצע, מה לא בוצע ולמה, עם חותמות זמן. הדוח מתעדכן בכל רענון.</p>
+  <div class="row" style="margin-bottom:12px">
+    <button id="refreshReportBtn">רענון</button>
+    <a id="csvLink" href="#"><button>הורדת CSV</button></a>
+  </div>
+  <div id="reportBody"></div>
+</section>
+
+</div>
+</main>
+<div class="toast" id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="common.js"></script>
+<script src="manager.js"></script>
+</body>
+</html>

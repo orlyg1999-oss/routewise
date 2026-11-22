@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RouteWise</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .pick { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 760px; margin: 40px auto; padding: 0 16px; }
+  @media (max-width: 640px) { .pick { grid-template-columns: 1fr; } }
+  .pick a { display: block; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+            padding: 22px; text-decoration: none; color: var(--ink); }
+  .pick a:hover { border-color: var(--brand); }
+  .pick h2 { margin: 0 0 6px; font-size: 19px; color: var(--brand); }
+  .pick p { margin: 0; color: var(--muted); }
+</style>
+</head>
+<body>
+<header class="top"><h1>Route<span>Wise</span></h1><div class="sub">מסלולי ביקור מתועדפים לסוקרי אגף הגבייה · נתונים סינתטיים בלבד</div></header>
+<div class="pick">
+  <a href="manager.html"><h2>מנהל השומה</h2><p>העלאת קובץ נכסים, משקלים, דירוג שקוף, שיבוץ ואישור, דוח ביקורים.</p></a>
+  <a href="surveyor.html"><h2>סוקר השטח</h2><p>המסלול של היום: רשימה ומפה, ניווט, בוצע / לא בוצע / דילוג.</p></a>
+</div>
+</body>
+</html>
